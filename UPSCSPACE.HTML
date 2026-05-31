@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPSC Operating System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* PREMIUM SAAS THEME */
+        :root {
+            --primary: #0f172a;       
+            --primary-hover: #1e293b;
+            --bg: #f8fafc;            
+            --card: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+            --success: #10b981;       
+            --danger: #ef4444;        
+            --warning: #f59e0b;
+            --purple: #6366f1;        
+            --header-bg: #0f172a;     
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; -webkit-font-smoothing: antialiased; }
+        
+        .app-wrapper { height: 100vh; display: flex; flex-direction: column; }
+        .container { max-width: 100%; margin: 0; padding: 20px; overflow-y: auto; flex: 1; }
+        .container-limited { max-width: 1300px; margin: 0 auto; }
+        .hidden { display: none !important; }
+
+        /* HEADER NAV */
+        .main-header { background: var(--header-bg); padding: 0 25px; height: 70px; display: flex; justify-content: space-between; align-items: center; z-index: 50; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .brand-logo { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 10px; cursor: pointer; color: white; letter-spacing: 0.5px; }
+        
+        .timer-badge { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 5px 15px; display: flex; align-items: center; gap: 15px; margin-right: 20px; color: white; }
+        .timer-label { font-weight: 700; color: #94a3b8; font-size: 0.75rem; letter-spacing: 0.5px; }
+        .timer-block { text-align: center; line-height: 1; display: flex; flex-direction: column; align-items: center; }
+        .timer-num { font-weight: 800; font-size: 1.1rem; color: white; font-family: monospace; }
+        .timer-text { font-size: 0.55rem; color: #94a3b8; font-weight: 700; margin-top: 2px; text-transform: uppercase; }
+        .timer-sep { height: 20px; width: 1px; background: rgba(255,255,255,0.2); }
+
+        .nav-btn { background: transparent; border: none; color: #94a3b8; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .nav-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* SPLIT LAYOUT */
+        .split-container { display: flex; height: calc(100vh - 140px); margin-top: 5px; width: 100%; overflow: hidden; transition: 0.3s; }
+        .pdf-panel { width: 50%; min-width: 20%; max-width: 80%; background: #e2e8f0; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); position: relative; display: flex; flex-direction: column; }
+        .pdf-toolbar { background: #f8fafc; color: var(--text); font-weight: 700; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+        .pdf-placeholder { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #64748b; text-align: center; width: 80%; pointer-events: none; }
+        .pdf-frame { width: 100%; height: 100%; border: none; background: white; flex: 1; }
+        .resizer { width: 12px; cursor: col-resize; background: transparent; display: flex; align-items: center; justify-content: center; z-index: 10; margin: 0 -1px; }
+        .resizer:hover, .resizer.dragging { background: var(--border); }
+        .interaction-panel { flex: 1; padding-left: 10px; overflow-y: auto; display: flex; flex-direction: column; }
+
+        /* UI COMPONENTS */
+        .card { background: var(--card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .card-compact { background: var(--card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.8rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        
+        .btn { background: var(--purple); color: white; border: 1px solid var(--purple); padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-family: 'Inter', sans-serif;}
+        .btn:hover { background: #4f46e5; }
+        .btn-outline { background: white; color: var(--text); border: 1px solid var(--border); }
+        .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+        .btn-danger { background: var(--danger); border-color: var(--danger); color: white; }
+        .btn-success { background: var(--success); border-color: var(--success); color: white; }
+        .btn-warning { background: var(--warning); border-color: var(--warning); color: white; }
+        
+        .file-btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8rem; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: white; position: relative; overflow: hidden; font-weight: 600;}
+        .file-btn input { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; font-size: 100px; }
+
+        input, select, textarea { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; margin-bottom: 12px; font-family: 'Inter', sans-serif; background: #fafafa;}
+        input:focus, select:focus, textarea:focus { background: white; border-color: var(--purple); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
+        label { font-weight: 600; display: block; margin-bottom: 4px; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;}
+
+        .type-toggle { display: flex; gap: 10px; margin-bottom: 15px; background: #f1f5f9; padding: 4px; border-radius: 8px; }
+        .type-btn { flex: 1; padding: 10px; text-align: center; border-radius: 6px; cursor: pointer; font-weight: 700; color: #64748b; font-size: 0.9rem; transition: 0.2s;}
+        .type-btn.active { background: white; color: var(--purple); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        /* OMR */
+        .omr-layout { display: flex; gap: 15px; flex-wrap: wrap; }
+        .omr-column { flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 6px; }
+        .omr-row { display: flex; flex-direction: column; padding: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid var(--border); }
+        .omr-controls-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+        .option-btn { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 600; background: white; font-size: 0.75rem; color: #64748b; transition: 0.1s; user-select: none; }
+        .option-btn.selected { background: var(--purple); color: white; border-color: var(--purple); }
+        .option-btn.marked-active { background: var(--warning) !important; color: white !important; border-color: var(--warning) !important; border-radius: 6px;}
+        .cert-row { display: flex; justify-content: space-between; border-top: 1px dashed var(--border); padding-top: 5px; }
+        .cert-btn { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; color: #64748b; font-weight: 700; background: #e2e8f0; transition: 0.1s;}
+        .cert-btn.active { background: var(--primary); color: white; }
+
+        /* TEST CARDS */
+        .lib-grid, .test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .lib-card, .test-card { background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .lib-card:hover, .test-card:hover { border-color: #cbd5e1; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(-3px);}
+        
+        .mini-score-grid { display: flex; justify-content: space-between; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin: 15px 0; text-align: center; }
+        .mini-score-grid div { display: flex; flex-direction: column; }
+        .mini-score-grid b { font-size: 1.1rem; color: var(--text); }
+        .mini-score-grid small { font-size: 0.6rem; color: #64748b; font-weight: 800; letter-spacing: 0.5px; }
+
+        .cert-badge-row { display: flex; justify-content: space-between; font-size: 0.7rem; color: #475569; background: #f1f5f9; padding: 6px; border-radius: 4px; margin-top: 10px; font-weight: 600; }
+
+        /* Analysis & Error Tagging */
+        .review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+        .review-box { padding: 15px; border-radius: 10px; border: 1px solid var(--border); font-size: 0.85rem; display: flex; flex-direction: column; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .rev-correct { border-left: 5px solid var(--success); }
+        .rev-wrong { border-left: 5px solid var(--danger); }
+        .rev-skipped { border-left: 5px solid #cbd5e1; }
+        
+        .err-tag { display: inline-block; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: #f8fafc; color: #475569; font-size: 0.75rem; font-weight: 700; cursor: pointer; margin: 3px 3px 0 0; transition: 0.1s; }
+        .err-tag.active { background: #e0e7ff; color: var(--purple); border-color: #c7d2fe; }
+        .trait-tag.active { background: #dcfce7; color: var(--success); border-color: #bbf7d0; }
+
+        .accuracy-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.85rem; background: white; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        .accuracy-table th { background: #f8fafc; font-weight: 700; color: #475569; padding: 12px; border-bottom: 1px solid var(--border); }
+        .accuracy-table td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+
+        /* Cumulative Analytics Grid */
+        .analytics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .analytics-stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .analytics-stat-card .val { font-size: 2.2rem; font-weight: 800; line-height: 1.2; }
+        .analytics-stat-card .lbl { font-size: 0.7rem; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 5px; letter-spacing: 0.5px; }
+        
+        .trend-graph-container { height: 150px; display: flex; align-items: flex-end; gap: 8px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; }
+        .trend-bar { flex: 1; background: var(--purple); border-radius: 4px 4px 0 0; min-height: 5%; position: relative; transition: 0.3s; opacity: 0.8; }
+        .trend-bar:hover { opacity: 1; }
+        .trend-tooltip { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; display: none; white-space: nowrap; font-weight:bold; }
+        .trend-bar:hover .trend-tooltip { display: block; }
+
+        /* HABIT TRACKER GRID */
+        .habit-table-container { width: 100%; overflow-x: auto; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .habit-table { width: 100%; border-collapse: collapse; min-width: 600px; font-size: 0.9rem; }
+        .habit-table th { padding: 15px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); background: #f8fafc; font-weight: 700; color: #1e293b; }
+        .habit-table td { padding: 15px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+        .habit-table td:first-child { text-align: left; font-weight: 600; background: #f8fafc; color: #475569; }
+        .habit-table th:first-child { text-align: left; }
+        .habit-checkbox { width: 22px; height: 22px; cursor: pointer; accent-color: var(--purple); }
+        .progress-bar-bg { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .progress-bar-fill { height: 100%; background: var(--purple); transition: width 0.3s ease; }
+
+        /* SYLLABUS */
+        .syllabus-subject-box { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .syllabus-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-bottom: 1px dashed var(--border); font-size: 0.95rem; }
+        .syllabus-item:hover { background: #f8fafc; }
+
+        /* RICH TEXT EDITOR */
+        .rt-toolbar { display: flex; gap: 5px; padding: 10px; background: #f8fafc; border: 1px solid var(--border); border-bottom: none; border-radius: 8px 8px 0 0; flex-wrap: wrap; }
+        .rt-btn { padding: 6px 12px; background: white; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-weight: 700; color: var(--text); font-size: 0.85rem; }
+        .rt-btn:hover { background: #e2e8f0; }
+        .rt-editor { flex: 1; border: 1px solid var(--border); border-radius: 0 0 8px 8px; padding: 20px; background: white; overflow-y: auto; font-size: 1rem; line-height: 1.7; min-height: 400px; }
+        .rt-editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 15px 0; border: 1px solid var(--border); }
+
+        /* MODALS & OVERLAYS */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .auth-box { width: 100%; max-width: 400px; text-align: center; padding: 3rem !important; }
+        .fullscreen-modal { position: fixed; top: 5%; left: 5%; width: 90%; height: 90%; background: white; z-index: 9000; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .fullscreen-modal-header { background: #f8fafc; border-bottom: 1px solid var(--border); padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+<!-- AUTHENTICATION OVERLAY -->
+<div id="auth-overlay">
+    <div class="card auth-box">
+        <div style="font-size: 3rem; color: var(--purple); margin-bottom: 15px;"><i class="fa-solid fa-layer-group"></i></div>
+        <h2 style="margin-bottom: 5px; color: var(--text); font-weight:800;">UPSC OS</h2>
+        <p style="color: #64748b; margin-bottom: 25px; font-size: 0.9rem;">Sign in to sync your workspace</p>
+        
+        <input type="email" id="auth-email" placeholder="Email Address">
+        <input type="password" id="auth-password" placeholder="Password">
+        
+        <button id="btn-login" class="btn" style="width: 100%; justify-content: center; margin-bottom: 10px; padding: 12px;">Log In</button>
+        <button id="btn-signup" class="btn btn-outline" style="width: 100%; justify-content: center; margin-bottom: 15px; padding: 12px;">Create Account</button>
+        
+        <div style="display:flex; align-items:center; margin: 15px 0;">
+            <div style="flex:1; height:1px; background:var(--border);"></div>
+            <div style="padding:0 10px; color:#94a3b8; font-size:0.75rem;">OR</div>
+            <div style="flex:1; height:1px; background:var(--border);"></div>
+        </div>
+
+        <button id="btn-google" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 12px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" style="width: 18px; margin-right: 8px;"> Continue with Google
+        </button>
+        
+        <div id="auth-error" style="color: var(--danger); margin-top: 15px; font-size: 0.85rem; display: none;"></div>
+    </div>
+</div>
+
+<!-- GLOBAL PDF VIEWER MODAL -->
+<div id="pdf-modal" class="fullscreen-modal hidden">
+    <div class="fullscreen-modal-header">
+        <h3 id="modal-pdf-title" style="margin:0;">Document Viewer</h3>
+        <button class="btn-sm btn-outline" onclick="document.getElementById('pdf-modal').classList.add('hidden')"><i class="fa-solid fa-xmark"></i> Close</button>
+    </div>
+    <iframe id="modal-pdf-frame" style="width: 100%; flex: 1; border: none; background: #e2e8f0;"></iframe>
+</div>
+
+<div class="app-wrapper">
+    <!-- NAVIGATION BAR -->
+    <div class="main-header">
+        <div class="brand-logo">
+            <i class="fa-solid fa-layer-group" style="color: var(--purple);"></i> 
+            <span id="app-brand-name" contenteditable="true" onblur="window.updateAppName(this.innerText)" style="outline:none; padding:2px; min-width: 100px; display:inline-block;">WORK FUCKING HARD</span>
+        </div>
+        
+        <!-- EXAM CONTROLS -->
+        <div id="active-test-controls" class="hidden" style="display: flex; gap: 15px; align-items: center;">
+            <div id="timer-display" style="font-size: 1.2rem; font-weight: 800; color: #fca5a5; font-family: monospace;">00:00</div>
+            <button class="btn btn-outline btn-sm" id="btn-pause" onclick="window.togglePause()"><i class="fa-solid fa-pause"></i> Pause</button>
+            <button class="btn btn-danger btn-sm" onclick="window.finishTest()">Finish Test</button>
+        </div>
+
+        <div id="nav-actions" style="display:flex; align-items:center;">
+            <div id="countdown-badge" class="timer-badge">
+                <span class="timer-label">PRELIMS '27</span>
+                <div class="timer-sep"></div>
+                <div class="timer-block"><span id="cd-d" class="timer-num">00</span><span class="timer-text">D</span></div>
+                <div class="timer-block"><span id="cd-h" class="timer-num">00</span><span class="timer-text">H</span></div>
+                <div class="timer-block"><span id="cd-m" class="timer-num">00</span><span class="timer-text">M</span></div>
+            </div>
+            
+            <button id="nav-holistic" class="nav-btn active" onclick="window.showView('holistic-page')">Notes</button>
+            <button id="nav-habits" class="nav-btn" onclick="window.showView('habits-page')">Habits</button>
+            <button id="nav-planners" class="nav-btn" onclick="window.showView('planners-page')">Planners</button>
+            <button id="nav-syllabus" class="nav-btn" onclick="window.showView('syllabus-page')">Syllabus</button>
+            <button id="nav-library" class="nav-btn" onclick="window.showView('library-page')">Tests</button>
+            <button id="nav-analytics" class="nav-btn" onclick="window.showView('analytics-page')">Analytics</button>
+
+            <button id="btn-logout" class="nav-btn" style="margin-left: 10px;" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="container">
+        
+        <!-- 1. HOLISTIC HOME PAGE (RICH TEXT NOTES) -->
+        <div id="holistic-page" class="container-limited">
+            <div class="split-container" style="height: auto; gap: 20px; overflow: visible; margin-top:0;">
+                <div class="card" style="flex: 2.5; margin-bottom: 0; display:flex; flex-direction:column; padding: 0;">
+                    <div style="padding: 20px 20px 0 20px; display:flex; justify-content:space-between; align-items:center;">
+                        <h2 style="margin:0;"><i class="fa-solid fa-pen-nib"></i> Command Center</h2>
+                        <div>
+                            <span id="note-save-msg" style="color: var(--success); font-size: 0.8rem; font-weight:700; margin-right: 15px; display: none;">Saved Locally <i class="fa-solid fa-check"></i></span>
+                            <button class="btn btn-sm btn-outline" onclick="window.saveNotes()">Save Canvas</button>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 20px; flex:1; display:flex; flex-direction:column;">
+                        <div class="rt-toolbar">
+                            <button class="rt-btn" onclick="document.execCommand('bold',false,null)" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                            <button class="rt-btn" onclick="document.execCommand('italic',false,null)" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                            <button class="rt-btn" onclick="document.execCommand('underline',false,null)" title="Underline"><i class="fa-solid fa-underline"></i></button>
+                            <div style="width:1px; background:var(--border); margin:0 5px;"></div>
+                            <button class="rt-btn" onclick="document.execCommand('insertUnorderedList',false,null)" title="Bullet List"><i class="fa-solid fa-list-ul"></i></button>
+                            <button class="rt-btn" onclick="document.execCommand('insertOrderedList',false,null)" title="Numbered List"><i class="fa-solid fa-list-ol"></i></button>
+                            <div style="width:1px; background:var(--border); margin:0 5px;"></div>
+                            <button class="rt-btn" onclick="document.execCommand('formatBlock',false,'H2')" title="Heading 1">H1</button>
+                            <button class="rt-btn" onclick="document.execCommand('formatBlock',false,'H3')" title="Heading 2">H2</button>
+                            <div style="width:1px; background:var(--border); margin:0 5px;"></div>
+                            <label class="rt-btn" style="margin:0; cursor:pointer;"><i class="fa-regular fa-image"></i> Insert Image <input type="file" accept="image/*" style="display:none;" onchange="window.insertImage(this)"></label>
+                        </div>
+                        <div id="quick-notes" class="rt-editor" contenteditable="true"></div>
+                        <p style="font-size:0.75rem; color:#94a3b8; margin-top:10px; font-weight:600;">*Rich text and images are saved securely to your browser's local IndexedDB memory.</p>
+                    </div>
+                </div>
+                
+                <div class="card" style="flex: 1; margin-bottom: 0; display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="margin:0;"><i class="fa-solid fa-folder-open"></i> Local PDF Vault</h3>
+                        <label class="btn btn-sm btn-outline" style="margin:0;"><i class="fa-solid fa-plus"></i> Upload <input type="file" style="display:none;" accept="application/pdf" onchange="window.uploadResource(this)"></label>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;">Upload SYLLABUS, PYQs, or short notes. Secured instantly in browser cache.</p>
+                    <div id="resource-list" style="flex:1; overflow-y:auto; border-top: 1px solid var(--border); padding-top: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. HABIT TRACKER PAGE -->
+        <div id="habits-page" class="container-limited hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2 style="margin:0;">Habit Tracker</h2>
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <div style="display:flex; background:white; border:1px solid var(--border); border-radius:6px; overflow:hidden;">
+                        <button class="btn-ghost" style="padding:6px 12px; border-right:1px solid var(--border);" onclick="window.changeHabitWeek(1)"><i class="fa-solid fa-chevron-left"></i> Prev Week</button>
+                        <button class="btn-ghost" style="padding:6px 12px;" onclick="window.changeHabitWeek(-1)">Next Week <i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" id="new-habit-input" placeholder="New Habit..." style="margin:0; padding:6px 12px; width:180px;">
+                        <button class="btn" style="padding: 6px 15px;" onclick="window.addHabit()">Add</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="habit-table-container">
+                <table class="habit-table">
+                    <thead id="habit-th"></thead>
+                    <tbody id="habit-tb"></tbody>
+                </table>
+            </div>
+            <p style="font-size:0.8rem; color:#94a3b8; margin-top:15px; font-weight:600;">*Changes are autosaved. Use arrows to view history.</p>
+        </div>
+
+        <!-- 3. PLANNERS PAGE (NEW) -->
+        <div id="planners-page" class="container-limited hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2 style="margin:0;">Strategic Planners</h2>
+                <button class="btn btn-sm btn-outline" onclick="window.savePlanners()">Save Planners</button>
+            </div>
+            
+            <div class="split-container" style="height:auto; gap:20px; overflow:visible; margin-top:0;">
+                <div style="flex:1; display:flex; flex-direction:column; gap:20px;">
+                    <div class="card" style="margin:0;">
+                        <h3 style="margin-bottom:10px;">Monthly Broad Plan</h3>
+                        <textarea id="plan-monthly" style="height:150px; resize:vertical;" placeholder="E.g., Complete Geography NCERTs, Give 4 Sectional Tests..."></textarea>
+                    </div>
+                    <div class="card" style="margin:0; flex:1;">
+                        <h3 style="margin-bottom:10px;">Weekly Targets</h3>
+                        <textarea id="plan-weekly" style="height:250px; resize:vertical;" placeholder="E.g., Monday-Wednesday: Geomorphology..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="card" style="flex:1.5; margin:0; display:flex; flex-direction:column;">
+                    <h3 style="margin-bottom:15px;">Daily Schedule Planner</h3>
+                    <div id="daily-schedule-list" style="flex:1; overflow-y:auto; padding-right:10px;">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SYLLABUS PAGE -->
+        <div id="syllabus-page" class="container-limited hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2 style="margin:0;">Syllabus Tracker</h2>
+                <div class="type-toggle" style="margin:0; width:300px;">
+                    <div class="type-btn active" id="btn-view-syl-pre" onclick="window.switchSylView('pre')">Prelims Themes</div>
+                    <div class="type-btn" id="btn-view-syl-mains" onclick="window.switchSylView('mains')">Mains Themes</div>
+                </div>
+            </div>
+
+            <!-- Prelims View -->
+            <div id="syl-pre-view">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="text" id="syl-new-subject-pre" placeholder="New Subject Name..." style="width:200px; margin:0;">
+                    <button class="btn btn-outline" onclick="window.addSyllabusSubject('prelims')">Add Subject</button>
+                </div>
+                <div id="syl-pre-grid" style="column-count: 2; column-gap: 20px;"></div>
+            </div>
+
+            <!-- Mains View -->
+            <div id="syl-mains-view" class="hidden">
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="text" id="syl-new-subject-mains" placeholder="New Subject Name..." style="width:200px; margin:0;">
+                    <button class="btn btn-outline" onclick="window.addSyllabusSubject('mains')">Add Subject</button>
+                </div>
+                <div id="syl-mains-grid" style="column-count: 2; column-gap: 20px;"></div>
+            </div>
+        </div>
+
+        <!-- 5. ANALYTICS PAGE -->
+        <div id="analytics-page" class="container-limited hidden">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 20px;">
+                <h2 style="margin:0;">Cumulative Analytics</h2>
+                <div style="text-align:right;">
+                    <label style="display:inline-block; margin-right:10px; font-size:0.75rem;">Analyze Subject:</label>
+                    <select id="analytics-subject-filter" onchange="window.renderAnalytics()" style="width: auto; margin: 0; padding: 6px 12px; font-weight:700;">
+                        <option value="ALL">All Subjects Overview</option>
+                    </select>
+                </div>
+            </div>
+            
+            <h4 style="margin-bottom: 10px; color: #475569; text-transform:uppercase; font-size:0.75rem;">Lifetime Objective Scoreboard (Prelims)</h4>
+            <div class="analytics-grid">
+                <div class="analytics-stat-card"><div class="val" id="cum-tests">0</div><div class="lbl">Tests Evaluated</div></div>
+                <div class="analytics-stat-card"><div class="val" id="cum-att">0</div><div class="lbl">Total Attempted</div></div>
+                <div class="analytics-stat-card"><div class="val" id="cum-cor" style="color:var(--success);">0</div><div class="lbl">Total Correct</div></div>
+                <div class="analytics-stat-card"><div class="val" id="cum-wr" style="color:var(--danger);">0</div><div class="lbl">Total Wrong</div></div>
+                <div class="analytics-stat-card"><div class="val" id="cum-unatt" style="color:#94a3b8;">0</div><div class="lbl">Unattempted</div></div>
+                <div class="analytics-stat-card"><div class="val" id="cum-acc" style="color:var(--purple);">0%</div><div class="lbl">Accuracy</div></div>
+            </div>
+
+            <!-- TREND GRAPH -->
+            <div class="card" style="margin-bottom:20px; padding:20px;">
+                <h3 style="margin-bottom: 10px; font-size:1rem;">Performance Trend (Last 15 Tests)</h3>
+                <div id="trend-graph" class="trend-graph-container"></div>
+            </div>
+
+            <div class="split-container" style="height: auto; gap: 20px; overflow: visible; margin-top:0;">
+                <div class="card" style="flex: 1; margin-bottom: 0;">
+                    <h3 style="margin-bottom: 15px; font-size:1rem;">Error Reason Distribution</h3>
+                    <table class="accuracy-table">
+                        <thead><tr><th style="text-align:left;">Error Type</th><th>Occurrences</th><th style="color:var(--purple);">% of Errors</th></tr></thead>
+                        <tbody id="cum-err-body"></tbody>
+                    </table>
+                </div>
+                
+                <div class="card" style="flex: 1; margin-bottom: 0;">
+                    <h3 style="margin-bottom: 15px; font-size:1rem;">Question Trait Distribution</h3>
+                    <table class="accuracy-table">
+                        <thead><tr><th style="text-align:left;">Trait Tag</th><th>Attempted</th><th style="color:var(--success);">Right</th><th style="color:var(--primary);">Accuracy</th></tr></thead>
+                        <tbody id="cum-trait-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. LIBRARY FOLDERS -->
+        <div id="library-page" class="container-limited hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h2 style="margin:0;">Test Library</h2>
+                <button class="btn" onclick="window.initCreateTest()">+ New Test</button>
+            </div>
+            <div id="library-grid" class="lib-grid"></div>
+        </div>
+
+        <!-- SERIES LIST (UI Cards with Scoreboard) -->
+        <div id="series-page" class="container-limited hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <button class="btn-ghost" onclick="window.showView('library-page')"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2 id="series-title" style="margin:0;">Folder</h2>
+                </div>
+                <button class="btn" onclick="window.initCreateTest(window.currentSeriesFilter)">+ Add Test Here</button>
+            </div>
+            <div id="main-test-list" class="test-grid"></div>
+            <div id="empty-msg" class="hidden" style="text-align:center; padding: 40px; color: #94a3b8;"><p>No tests in this folder.</p></div>
+        </div>
+
+        <!-- CREATE TEST PAGE -->
+        <div id="create-page" class="container-limited hidden">
+            <div class="card" style="max-width: 600px; margin: 20px auto;">
+                <h2 id="create-title" style="margin-bottom:15px;">Create Test</h2>
+                
+                <div class="type-toggle">
+                    <div class="type-btn active" id="btn-type-prelims" onclick="window.setTestType('prelims')">Prelims (Objective OMR)</div>
+                    <div class="type-btn" id="btn-type-mains" onclick="window.setTestType('mains')">Mains (Subjective Sheet)</div>
+                </div>
+                <input type="hidden" id="in-test-type" value="prelims">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><label>Folder Name</label><input type="text" id="in-series" list="series-options" placeholder="e.g., General"></div>
+                    <div><label>Test Name</label><input type="text" id="in-name" placeholder="e.g., Test 1 - Polity"></div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><label>Questions</label><input type="number" id="in-count" value="50"></div>
+                    <div><label>Time (Min)</label><input type="number" id="in-time" value="60"></div>
+                </div>
+                
+                <!-- Prelims Specific -->
+                <div id="prelims-settings" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><label>Marks (+)</label><input type="number" id="in-pos" value="2"></div>
+                    <div><label>Negative Factor</label><select id="in-neg-factor"><option value="0.333">1/3rd</option><option value="0.25">1/4th</option><option value="0">None</option></select></div>
+                </div>
+
+                <!-- Mains Specific -->
+                <div id="mains-settings" class="hidden" style="margin-top: 5px; padding: 15px; background: #f8fafc; border-radius: 8px; border:1px solid var(--border);">
+                    <div style="margin-bottom:10px;"><label>Total Exam Marks</label><input type="number" id="in-mains-total" value="250" style="margin:0;"></div>
+                    <p style="font-size: 0.75rem; color: #64748b; margin:0; font-weight:600;"><i class="fa-solid fa-info-circle"></i> Mains tests remove the OMR. You will upload your scanned answer sheet at the end and self-evaluate.</p>
+                </div>
+
+                <div style="margin-top:20px; display:flex; gap:10px;">
+                    <button class="btn btn-outline" onclick="window.cancelCreate()" style="flex:1;">Cancel</button>
+                    <button class="btn" onclick="window.saveTest()" style="flex:2; justify-content:center;">Save & Create</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST LOBBY -->
+        <div id="test-window" class="container-limited hidden">
+            <div class="card" style="max-width: 800px; margin: 0 auto; padding: 2.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+                     <div>
+                        <div style="font-size:0.75rem; font-weight:800; margin-bottom:10px;"><span id="win-type-tag" style="background:var(--primary); color:white; padding:4px 8px; border-radius:6px; margin-right:8px; letter-spacing:0.5px;">PRELIMS</span><span id="win-series-tag" style="color:#64748b; text-transform:uppercase;">SERIES</span></div>
+                        <h2 id="win-title" style="margin:0; font-size:1.8rem; color:var(--text);"></h2>
+                        <p id="win-meta" style="color: #64748b; font-size:0.95rem; margin-top:8px; font-weight:600;"></p>
+                     </div>
+                     <div style="display:flex; gap:8px;">
+                        <button class="btn-ghost" onclick="window.editCurrentTest()" title="Edit Test"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-ghost" onclick="window.goBackToSeries()" title="Close"><i class="fa-solid fa-xmark" style="font-size:1.2rem;"></i></button>
+                     </div>
+                </div>
+
+                <div style="background: #f8fafc; padding: 40px; border-radius: 12px; border: 1px dashed #cbd5e1; text-align: center;">
+                    <div id="action-unattempted" class="hidden">
+                        <button class="btn" style="padding: 15px 50px; font-size:1.2rem; border-radius:30px; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);" onclick="window.startActualTest()">Start Attempt <i class="fa-solid fa-arrow-right" style="margin-left:5px;"></i></button>
+                    </div>
+                    <div id="action-submitted" class="hidden">
+                        <h3 style="color: var(--warning); margin-bottom: 10px; font-size:1.4rem;">Ready for Evaluation</h3>
+                        <p style="margin-bottom:20px; font-size:0.95rem; color:#64748b;">Test submitted successfully. Provide the answer key to generate results.</p>
+                        <button class="btn btn-success" style="padding: 12px 30px; font-size:1.05rem;" onclick="window.showKeyEntry()">Evaluate Now</button>
+                    </div>
+                    <div id="action-evaluated" class="hidden">
+                        <div style="display:flex; justify-content:center; gap:40px; align-items:center; margin-bottom: 30px;">
+                            <div style="text-align:center;">
+                                <div style="font-size:0.8rem; color:#64748b; font-weight:800; letter-spacing:1px; margin-bottom:5px;">FINAL SCORE</div>
+                                <div id="dash-score" style="font-size: 3.5rem; color: var(--text); font-weight:800; line-height:1;"></div>
+                            </div>
+                            <div id="dash-acc-block" style="text-align:center; padding-left:40px; border-left:1px solid var(--border);">
+                                <div style="font-size:0.8rem; color:#64748b; font-weight:800; letter-spacing:1px; margin-bottom:5px;">ACCURACY</div>
+                                <div id="dash-acc" style="font-size: 3.5rem; color: var(--purple); font-weight:800; line-height:1;"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                            <button class="btn" style="padding: 10px 25px;" onclick="window.renderAnalysis()">View Detailed Analysis</button>
+                            <button class="btn btn-outline" onclick="window.reattemptTest()"><i class="fa-solid fa-rotate-right"></i> Re-attempt</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAKING EXAM PAGE -->
+        <div id="taking-page" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
+                <label id="lbl-qp" class="file-btn">
+                    <span id="txt-qp"><i class="fa-solid fa-file-pdf"></i> Load Question PDF</span>
+                    <input type="file" accept="application/pdf" onchange="window.handleFileUpload(this, 'qp')">
+                </label>
+                <button class="btn btn-sm btn-outline" onclick="window.toggleAppFullscreen()" id="btn-focus-toggle"><i class="fa-solid fa-expand"></i> Fullscreen</button>
+            </div>
+
+            <div class="split-container" id="split-taking" style="margin-top:0;">
+                <div class="pdf-panel">
+                    <div class="pdf-toolbar">
+                        <span>Question Paper</span>
+                        <button class="btn-ghost" onclick="window.togglePanel(this)"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                    <div id="qp-placeholder" class="pdf-placeholder"><h3>No PDF</h3><p style="font-size:0.85rem; margin-top:5px; font-weight:600;">Upload file to load locally</p></div>
+                    <iframe id="qp-frame" class="pdf-frame" style="display:none;"></iframe>
+                    <div class="iframe-shield"></div>
+                </div>
+                
+                <div class="resizer" onmousedown="window.initDrag(event, 'split-taking')"></div>
+                
+                <!-- PRELIMS OMR -->
+                <div id="interaction-prelims" class="interaction-panel card-compact" style="margin:0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+                        <h3 style="margin:0;">OMR Sheet</h3>
+                    </div>
+                    <div id="test-omr-container" class="omr-layout"></div>
+                </div>
+
+                <!-- MAINS NOTE -->
+                <div id="interaction-mains" class="interaction-panel card-compact hidden" style="margin:0; display:flex; flex-direction:column;">
+                    <h3 style="margin-bottom:10px;">Subjective Exam</h3>
+                    <p style="font-size: 0.85rem; color:#64748b; margin-bottom: 15px; padding:12px; background:#f8fafc; border-radius:8px; border:1px solid var(--border); font-weight:600;">Write your answers on physical paper. You will upload a scan of your sheets during the evaluation phase.</p>
+                    <textarea style="flex:1; resize:none;" placeholder="Optional: Use this space for rough work or outlines..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- EVALUATION PAGE -->
+        <div id="key-page" class="hidden">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
+                <div style="display:flex; gap:10px;">
+                    <label id="lbl-sol-key" class="file-btn"><span id="txt-sol-key"><i class="fa-solid fa-file-pdf"></i> Load Solution PDF</span><input type="file" accept="application/pdf" onchange="window.handleFileUpload(this, 'sol')"></label>
+                    <!-- MAINS ANSWER UPLOAD -->
+                    <label id="lbl-mains-ans" class="file-btn hidden"><span id="txt-mains-ans"><i class="fa-solid fa-upload"></i> Upload My Answer Sheet</span><input type="file" accept="application/pdf" onchange="window.handleFileUpload(this, 'mains_ans')"></label>
+                </div>
+                <button class="btn btn-success" onclick="window.validateAndCalculate()">Complete Evaluation</button>
+            </div>
+            
+            <div class="split-container" id="split-key" style="margin-top:0;">
+                 <div class="pdf-panel">
+                    <div class="pdf-toolbar">
+                        <span>Solution Viewer</span>
+                        <button class="btn-ghost" onclick="window.togglePanel(this)"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                    <div id="key-placeholder" class="pdf-placeholder"><h3>No PDF</h3></div><iframe id="key-frame" class="pdf-frame" style="display:none;"></iframe><div class="iframe-shield"></div>
+                </div>
+                <div class="resizer" onmousedown="window.initDrag(event, 'split-key')"></div>
+                
+                <div id="eval-prelims" class="interaction-panel card-compact" style="margin:0;">
+                    <h3 style="margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;">Input Correct Key</h3>
+                    <div id="key-omr-container" class="omr-layout"></div>
+                </div>
+                
+                <div id="eval-mains" class="interaction-panel card-compact hidden" style="margin:0;">
+                    <h3 style="margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:10px;">Self Evaluation</h3>
+                    <div id="mains-eval-container" style="display:flex; flex-direction:column; gap:15px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYSIS PAGE -->
+        <div id="analysis-page" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
+                <div style="display:flex; gap: 10px; background:white; padding:5px; border-radius:8px; border:1px solid var(--border);">
+                    <button class="btn-sm btn-ghost" onclick="window.loadPDFIfExists('qp', 'sol-frame', 'sol-placeholder')">Questions</button>
+                    <button class="btn-sm btn-ghost" onclick="window.loadPDFIfExists('sol', 'sol-frame', 'sol-placeholder')" style="background:#f1f5f9; box-shadow:0 1px 2px rgba(0,0,0,0.05); color:var(--text);">Solutions</button>
+                    <button id="btn-view-mains-ans" class="btn-sm btn-ghost hidden" onclick="window.loadPDFIfExists('mains_ans', 'sol-frame', 'sol-placeholder')">My Ans Sheet</button>
+                </div>
+                <div style="display:flex; gap: 10px;">
+                    <button class="btn btn-sm btn-outline" style="color:var(--purple); border-color:var(--purple);" onclick="window.showDetailedError(window.activeIdx)"><i class="fa-solid fa-chart-pie"></i> Detailed Error</button>
+                    <button class="btn btn-sm" onclick="window.showView('test-window')">Back to Lobby</button>
+                </div>
+            </div>
+            
+            <div class="split-container" id="split-analysis" style="margin-top:0;">
+                <div class="pdf-panel">
+                    <div class="pdf-toolbar">
+                        <span>Document Viewer</span>
+                        <button class="btn-ghost" onclick="window.togglePanel(this)"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                    <div id="sol-placeholder" class="pdf-placeholder"><h3>No Document</h3></div><iframe id="sol-frame" class="pdf-frame" style="display:none;"></iframe><div class="iframe-shield"></div>
+                </div>
+                <div class="resizer" onmousedown="window.initDrag(event, 'split-analysis')"></div>
+                
+                <div class="interaction-panel">
+                    <div class="card-compact" style="display:flex; justify-content:space-around; text-align:center; padding: 20px 10px;">
+                        <div id="an-att-box">
+                            <span style="font-size:1.8rem; font-weight:800; color:var(--text);" id="an-att">0</span><br><small style="font-size:0.7rem; color:#64748b; font-weight:800;">ATTEMPTED</small>
+                        </div>
+                        <div id="an-c-box" style="color:var(--success)">
+                            <span style="font-size:1.8rem; font-weight:800" id="an-c">0</span><br><small style="font-size:0.7rem; font-weight:800;">CORRECT</small>
+                        </div>
+                        <div id="an-w-box" style="color:var(--danger)">
+                            <span style="font-size:1.8rem; font-weight:800" id="an-w">0</span><br><small style="font-size:0.7rem; font-weight:800;">WRONG</small>
+                        </div>
+                        <div id="an-unatt-box" style="color:#94a3b8">
+                            <span style="font-size:1.8rem; font-weight:800" id="an-unatt">0</span><br><small style="font-size:0.7rem; font-weight:800;">UNATT</small>
+                        </div>
+                        <div>
+                            <span style="font-size:1.8rem; font-weight:800; color:var(--primary);" id="an-s">0</span><br><small style="font-size:0.7rem; color:#64748b; font-weight:800;">SCORE</small>
+                        </div>
+                    </div>
+                    
+                    <div id="prelims-analysis-view">
+                        <div class="card-compact" style="margin-top:10px; padding:15px;">
+                            <h4 style="font-size:0.8rem; color:#475569; margin-bottom:10px; text-transform:uppercase;">Subject Wise Accuracy (This Test)</h4>
+                            <table class="accuracy-table" style="margin:0;">
+                                <thead><tr><th style="padding:8px; text-align:left;">Subject</th><th style="padding:8px;">Att</th><th style="padding:8px;">Right</th><th style="padding:8px;">Acc</th></tr></thead>
+                                <tbody id="test-subj-stats-body"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="card-compact" style="margin-top:10px; padding:15px;">
+                            <h4 style="font-size:0.8rem; color:#475569; margin-bottom:10px; text-transform:uppercase;">Accuracy by Certainty</h4>
+                            <table class="accuracy-table" style="margin:0;">
+                                <thead><tr><th style="padding:8px;">Cert</th><th style="padding:8px;">Att</th><th style="padding:8px;">Acc</th></tr></thead>
+                                <tbody id="cert-stats-body"></tbody>
+                            </table>
+                        </div>
+                        
+                        <div style="padding: 12px; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; margin: 15px 0; font-size: 0.8rem; color: #475569; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; font-weight:600;">
+                            <span style="display:flex; align-items:center; gap:5px;"><div style="width:12px; height:12px; background:var(--success); border-radius:2px;"></div> Correct</span>
+                            <span style="display:flex; align-items:center; gap:5px;"><div style="width:12px; height:12px; background:var(--danger); border-radius:2px;"></div> Wrong</span>
+                            <span style="display:flex; align-items:center; gap:5px;"><div style="background:#cbd5e1; width:12px; height:12px; border-radius:2px;"></div> Skipped</span>
+                        </div>
+
+                        <div id="review-list" class="review-grid"></div>
+                    </div>
+                    
+                    <div id="mains-analysis-view" class="hidden">
+                        <h4 style="margin: 15px 0 10px 0; font-size:1rem;">Question Remarks</h4>
+                        <div id="mains-remarks-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FIREBASE & MAIN JS ENGINE -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyBLoXPydksdcg3b_S-XzNgHVU4ZkcKS4Z0",
+        authDomain: "mocktest-app-4bc8f.firebaseapp.com",
+        projectId: "mocktest-app-4bc8f",
+        storageBucket: "mocktest-app-4bc8f.firebasestorage.app",
+        messagingSenderId: "679292950201",
+        appId: "1:679292950201:web:8ded807767fcfd4d99ad68"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db_firestore = getFirestore(app);
+
+    // DEFAULTS
+    const defaultSyllabus = {
+        prelims: {
+            "Polity": [{text: "Historical Background", done: false}, {text: "Fundamental Rights", done: false}],
+            "Geography": [{text: "Geomorphology", done: false}, {text: "Climatology", done: false}]
+        },
+        mains: {
+            "GS 1": [{text: "Indian Culture", done: false}, {text: "Modern Indian History", done: false}],
+            "GS 2": [{text: "Indian Constitution", done: false}, {text: "Functions of Union/States", done: false}]
+        }
+    };
+    
+    const defaultHabits = {
+        list: ["Sleep 7hrs", "Read Newspaper", "Answer Writing", "Exercise", "Revision"],
+        logs: {} 
+    };
+
+    const defaultPlanners = {
+        monthly: "",
+        weekly: "",
+        daily: { "08:00": "", "10:00": "", "12:00": "", "14:00": "", "16:00": "", "18:00": "", "20:00": "" }
+    };
+
+    // GLOBALS
+    window.appName = "WORK FUCKING HARD";
+    window.tests = [];
+    window.syllabus = defaultSyllabus;
+    window.habitsData = defaultHabits;
+    window.habitWeekOffset = 0; // 0 = current week, 1 = prev week
+    window.plannersData = defaultPlanners;
+    window.resources = []; 
+    window.activeIdx = null;
+    window.currentSeriesFilter = null;
+    window.timerInterval = null;
+    window.testSecondsRemaining = 0;
+    window.isPaused = false;
+    let currentUser = null;
+
+    // TAG LISTS 
+    const traitTagsList = ["conceptual", "factual"];
+    const errorTagsList = ["silly mistake", "not remembered", "knowledge gap", "revision gap"];
+    const subjectList = ["Polity", "Economy", "Modern India", "Environment", "S&T", "Geography", "IR", "A&C", "CA", "OTHER"];
+
+    // --- LOCAL INDEXEDDB (For PDFs AND Rich Text Notes) ---
+    const DB_NAME = 'MockTestPro_LocalDB';
+    let localDb;
+    const request = indexedDB.open(DB_NAME, 2); 
+    request.onupgradeneeded = e => { 
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('files')) db.createObjectStore('files'); 
+        if (!db.objectStoreNames.contains('data')) db.createObjectStore('data'); 
+    };
+    request.onsuccess = e => { 
+        localDb = e.target.result; 
+        loadLocalNotes(); 
+    };
+
+    window.storeFile = function(prefix, id, file) {
+        if(!localDb) return;
+        localDb.transaction(['files'], 'readwrite').objectStore('files').put(file, `${prefix}_${id}`);
+    }
+    window.getFile = function(prefix, id, cb) {
+        if(!localDb) return cb(null);
+        const req = localDb.transaction(['files'], 'readonly').objectStore('files').get(`${prefix}_${id}`);
+        req.onsuccess = () => cb(req.result); req.onerror = () => cb(null);
+    }
+    window.deleteFile = function(prefix, id) {
+        if(!localDb) return;
+        localDb.transaction(['files'], 'readwrite').objectStore('files').delete(`${prefix}_${id}`);
+    }
+
+    // --- AUTHENTICATION ---
+    const authOverlay = document.getElementById('auth-overlay');
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            authOverlay.style.display = 'none';
+            try {
+                const docSnap = await getDoc(doc(db_firestore, "user_data", user.uid));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    window.appName = data.appName || "WORK FUCKING HARD";
+                    window.tests = data.tests || [];
+                    window.resources = data.resources || [];
+                    window.syllabus = data.syllabus || defaultSyllabus;
+                    window.habitsData = data.habits || defaultHabits;
+                    window.plannersData = data.planners || defaultPlanners;
+                }
+            } catch (e) { console.error("Data pull error:", e); }
+            
+            document.getElementById('app-brand-name').innerText = window.appName;
+            window.updateNav('nav-holistic');
+            window.showView('holistic-page'); 
+        } else {
+            currentUser = null;
+            authOverlay.style.display = 'flex';
+        }
+    });
+
+    document.getElementById('btn-login').addEventListener('click', () => { signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(err => { document.getElementById('auth-error').innerText = err.message; document.getElementById('auth-error').style.display = 'block'; }); });
+    document.getElementById('btn-signup').addEventListener('click', () => { createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-password').value).catch(err => { document.getElementById('auth-error').innerText = err.message; document.getElementById('auth-error').style.display = 'block'; }); });
+    document.getElementById('btn-google').addEventListener('click', () => { const provider = new GoogleAuthProvider(); signInWithPopup(auth, provider).catch(err => { document.getElementById('auth-error').innerText = err.message; document.getElementById('auth-error').style.display = 'block'; }); });
+    document.getElementById('btn-logout').addEventListener('click', () => { signOut(auth); });
+
+    window.updateAppName = function(name) { window.appName = name.trim() || "MockTest Pro"; window.save(); }
+
+    // --- CLOUD TEXT DATA SAVE ---
+    window.save = async function() {
+        if (!currentUser) return;
+        try {
+            await setDoc(doc(db_firestore, "user_data", currentUser.uid), { 
+                appName: window.appName,
+                tests: window.tests,
+                resources: window.resources,
+                syllabus: window.syllabus,
+                habits: window.habitsData,
+                planners: window.plannersData
+            });
+        } catch (e) {}
+    }
+
+    // --- RICH TEXT NOTES (INDEXED DB) ---
+    window.insertImage = function(input) {
+        if(input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.execCommand('insertImage', false, e.target.result); }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    window.saveNotes = function() {
+        const html = document.getElementById('quick-notes').innerHTML;
+        if(localDb) localDb.transaction(['data'], 'readwrite').objectStore('data').put(html, 'rich_notes');
+        const msg = document.getElementById('note-save-msg');
+        msg.style.display = 'inline'; setTimeout(() => { msg.style.display = 'none'; }, 2000);
+    }
+    function loadLocalNotes() {
+        if(localDb) {
+            const req = localDb.transaction(['data'], 'readonly').objectStore('data').get('rich_notes');
+            req.onsuccess = () => { if(req.result) document.getElementById('quick-notes').innerHTML = req.result; }
+        }
+    }
+
+    // --- LOCAL PDF VAULT ---
+    window.uploadResource = function(input) {
+        if(!input.files[0]) return;
+        const file = input.files[0];
+        const resId = Date.now().toString();
+        window.storeFile('vault', resId, file);
+        window.resources.push({ id: resId, name: file.name });
+        window.save(); window.renderResources();
+        input.value = ""; 
+    }
+    window.renderResources = function() {
+        const list = document.getElementById('resource-list'); list.innerHTML = "";
+        if(window.resources.length === 0) { list.innerHTML = `<p style="color:#94a3b8; font-size:0.85rem; padding:15px;">No files uploaded.</p>`; return; }
+        window.resources.forEach(r => {
+            list.innerHTML += `
+                <div class="resource-item">
+                    <span style="font-weight:600; color:#334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;"><i class="fa-solid fa-file-pdf" style="color:var(--danger); margin-right:5px;"></i> ${r.name}</span>
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn-sm btn-outline" onclick="window.viewResource('${r.id}')">View</button>
+                        <button class="btn-sm btn-outline btn-danger" style="border:none;" onclick="window.deleteResource('${r.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>`;
+        });
+    }
+    window.viewResource = function(id) {
+        window.getFile('vault', id, file => {
+            if(file) {
+                const url = URL.createObjectURL(file);
+                document.getElementById('modal-pdf-title').innerText = window.resources.find(r=>r.id===id).name;
+                document.getElementById('modal-pdf-frame').src = url;
+                document.getElementById('pdf-modal').classList.remove('hidden');
+            } else { alert("File not found in local cache."); }
+        });
+    }
+    window.deleteResource = function(id) {
+        if(!confirm("Delete this file permanently?")) return;
+        window.deleteFile('vault', id);
+        window.resources = window.resources.filter(r => r.id !== id);
+        window.save(); window.renderResources();
+    }
+
+    // --- TEST PDF LOGIC ---
+    window.handleFileUpload = function(input, type) {
+        if(!input.files[0]) return;
+        const file = input.files[0];
+        const url = URL.createObjectURL(file);
+        
+        // Preview logic
+        let fid='qp-frame', pid='qp-placeholder'; 
+        if(type==='sol' || type==='mains_ans'){fid='key-frame';pid='key-placeholder';} 
+        if(!document.getElementById('analysis-page').classList.contains('hidden')){fid='sol-frame';pid='sol-placeholder';}
+        
+        const fr=document.getElementById(fid), ph=document.getElementById(pid); 
+        if(fr&&ph){fr.src=url;fr.style.display='block';ph.style.display='none';}
+        
+        window.storeFile(window.tests[window.activeIdx].id, type, file);
+        
+        // UI updates (Fix for Mains Ans UI)
+        const map = {'qp':'lbl-qp','sol':'lbl-sol-key','mains_ans':'lbl-mains-ans'}; 
+        if(map[type]) {
+            document.getElementById(map[type]).classList.add('has-file');
+            document.getElementById(map[type].replace('lbl', 'txt')).innerHTML = `<i class="fa-solid fa-check"></i> Loaded Locally`;
+        }
+    }
+
+    window.loadPDFIfExists = function(type, fid, pid) {
+        const f=document.getElementById(fid), p=document.getElementById(pid);
+        
+        // Reset styles for active button state
+        document.querySelectorAll('#split-analysis .btn-sm').forEach(b => { b.style.background = 'transparent'; b.style.boxShadow = 'none'; b.style.color = '#94a3b8'; });
+        if(event && event.target) {
+            event.target.style.background = 'white';
+            event.target.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+            event.target.style.color = 'var(--text)';
+        }
+
+        window.getFile(window.tests[window.activeIdx].id, type, file => {
+            if(file) {
+                const url = URL.createObjectURL(file);
+                f.src = url; f.style.display = 'block'; p.style.display = 'none';
+            } else {
+                f.style.display = 'none'; p.style.display = 'block'; p.innerHTML = "<h3>No Document Found</h3>";
+            }
+        });
+    }
+
+    // --- PLANNERS LOGIC ---
+    window.renderPlanners = function() {
+        document.getElementById('plan-monthly').value = window.plannersData.monthly;
+        document.getElementById('plan-weekly').value = window.plannersData.weekly;
+        
+        const dList = document.getElementById('daily-schedule-list');
+        dList.innerHTML = '';
+        Object.keys(window.plannersData.daily).forEach(time => {
+            dList.innerHTML += `
+                <div style="display:flex; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px;">
+                    <div style="width:60px; font-weight:700; color:var(--purple); font-size:0.85rem;">${time}</div>
+                    <input type="text" id="plan-d-${time}" value="${window.plannersData.daily[time]}" style="margin:0; border:none; background:transparent; box-shadow:none; padding:5px;" placeholder="Task...">
+                </div>
+            `;
+        });
+    }
+    window.savePlanners = function() {
+        window.plannersData.monthly = document.getElementById('plan-monthly').value;
+        window.plannersData.weekly = document.getElementById('plan-weekly').value;
+        Object.keys(window.plannersData.daily).forEach(time => {
+            window.plannersData.daily[time] = document.getElementById(`plan-d-${time}`).value;
+        });
+        window.save(); alert("Planners Saved!");
+    }
+
+
+    // --- HABIT TRACKER ---
+    function getDates() {
+        const dates = [];
+        for (let i = 6; i >= 0; i--) {
+            let d = new Date(); 
+            // Offset logic: 0 = current, 1 = prev 7 days
+            d.setDate(d.getDate() - i - (7 * window.habitWeekOffset));
+            dates.push({
+                full: d.toISOString().split('T')[0],
+                dayStr: d.toLocaleDateString('en-US', { weekday: 'short' }),
+                dateStr: d.getDate()
+            });
+        }
+        return dates;
+    }
+
+    window.changeHabitWeek = function(dir) {
+        window.habitWeekOffset += dir;
+        if(window.habitWeekOffset < 0) window.habitWeekOffset = 0;
+        window.renderHabits();
+    }
+
+    window.renderHabits = function() {
+        const th = document.getElementById('habit-th');
+        const tb = document.getElementById('habit-tb');
+        const dates = getDates();
+        const habits = window.habitsData.list;
+
+        let headHtml = `<tr><th>Date ${window.habitWeekOffset > 0 ? `<span style='color:var(--warning); font-size:0.7rem;'>(Past)</span>` : ''}</th>`;
+        habits.forEach((h, i) => { headHtml += `<th>${h} <i class="fa-solid fa-xmark" style="cursor:pointer; color:#ef4444; margin-left:5px;" onclick="window.removeHabit(${i})"></i></th>`; });
+        headHtml += `<th>Progress</th></tr>`;
+        th.innerHTML = headHtml;
+
+        tb.innerHTML = '';
+        dates.forEach(dObj => {
+            const d = dObj.full;
+            if(!window.habitsData.logs[d]) window.habitsData.logs[d] = {};
+            
+            let rowHtml = `<tr><td><span style="color:#64748b; margin-right:5px;">${dObj.dayStr}</span> ${dObj.dateStr}</td>`;
+            let checkedCount = 0;
+            
+            habits.forEach(h => {
+                const isChecked = window.habitsData.logs[d][h];
+                if(isChecked) checkedCount++;
+                rowHtml += `<td><input type="checkbox" class="habit-checkbox" ${isChecked ? 'checked' : ''} onchange="window.toggleHabit('${d}', '${h}', this.checked)"></td>`;
+            });
+            
+            const progress = habits.length > 0 ? Math.round((checkedCount / habits.length) * 100) : 0;
+            rowHtml += `
+                <td>
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:800;"><span>${progress}%</span></div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
+                </td></tr>`;
+            tb.innerHTML += rowHtml;
+        });
+    }
+
+    window.toggleHabit = function(date, habit, isChecked) {
+        window.habitsData.logs[date][habit] = isChecked;
+        window.save(); window.renderHabits();
+    }
+    window.addHabit = function() {
+        const inp = document.getElementById('new-habit-input');
+        if(inp.value.trim() && !window.habitsData.list.includes(inp.value.trim())) {
+            window.habitsData.list.push(inp.value.trim()); window.save(); window.renderHabits();
+            inp.value = '';
+        }
+    }
+    window.removeHabit = function(idx) {
+        if(confirm("Remove this habit?")) { window.habitsData.list.splice(idx, 1); window.save(); window.renderHabits(); }
+    }
+
+    // --- SYLLABUS TRACKER LOGIC ---
+    window.switchSylView = function(view) {
+        document.getElementById('btn-view-syl-pre').classList.toggle('active', view === 'pre');
+        document.getElementById('btn-view-syl-mains').classList.toggle('active', view === 'mains');
+        document.getElementById('syl-pre-view').classList.toggle('hidden', view !== 'pre');
+        document.getElementById('syl-mains-view').classList.toggle('hidden', view !== 'mains');
+        window.renderSyllabus();
+    }
+
+    window.renderSyllabus = function() {
+        // Build Prelims Verticals
+        const preGrid = document.getElementById('syl-pre-grid'); preGrid.innerHTML = '';
+        Object.keys(window.syllabus.prelims).forEach(sub => {
+            let items = window.syllabus.prelims[sub];
+            let doneCount = items.filter(i=>i.done).length;
+            let pct = items.length > 0 ? Math.round((doneCount/items.length)*100) : 0;
+            
+            let html = `
+                <div class="syllabus-subject-box" style="break-inside: avoid;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0;">${sub}</h4>
+                        <button class="btn-ghost" style="color:var(--danger); padding:2px;" onclick="window.deleteSyllabusSubject('prelims', '${sub}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div style="font-size:0.75rem; font-weight:800; color:var(--purple); text-align:right;">${pct}%</div>
+                    <div class="progress-bar-bg" style="margin-bottom:15px;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+            `;
+            items.forEach((item, idx) => {
+                html += `
+                    <div class="syllabus-item">
+                        <input type="checkbox" class="habit-checkbox" ${item.done ? 'checked' : ''} onchange="window.toggleSyllabus('prelims', '${sub}', ${idx})">
+                        <span style="${item.done ? 'text-decoration:line-through; color:#94a3b8;' : ''}">${item.text}</span>
+                        <i class="fa-solid fa-xmark" style="cursor:pointer; color:#ef4444; margin-left:auto;" onclick="window.deleteSyllabusItem('prelims', '${sub}', ${idx})"></i>
+                    </div>`;
+            });
+            html += `<div style="display:flex; gap:10px; margin-top:10px;"><input type="text" id="syl-new-${sub}" placeholder="Add theme..." style="margin:0; padding:4px; font-size:0.8rem;"><button class="btn-sm btn-outline" onclick="window.addSyllabusItem('prelims', '${sub}')">Add</button></div></div>`;
+            preGrid.innerHTML += html;
+        });
+
+        // Build Mains Verticals
+        const mainsGrid = document.getElementById('syl-mains-grid'); mainsGrid.innerHTML = '';
+        Object.keys(window.syllabus.mains).forEach(sub => {
+            let items = window.syllabus.mains[sub];
+            let doneCount = items.filter(i=>i.done).length;
+            let pct = items.length > 0 ? Math.round((doneCount/items.length)*100) : 0;
+            
+            let html = `
+                <div class="syllabus-subject-box" style="break-inside: avoid;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h4 style="margin:0;">${sub}</h4>
+                        <button class="btn-ghost" style="color:var(--danger); padding:2px;" onclick="window.deleteSyllabusSubject('mains', '${sub}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                    <div style="font-size:0.75rem; font-weight:800; color:var(--purple); text-align:right;">${pct}%</div>
+                    <div class="progress-bar-bg" style="margin-bottom:15px;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+            `;
+            items.forEach((item, idx) => {
+                html += `
+                    <div class="syllabus-item">
+                        <input type="checkbox" class="habit-checkbox" ${item.done ? 'checked' : ''} onchange="window.toggleSyllabus('mains', '${sub}', ${idx})">
+                        <span style="${item.done ? 'text-decoration:line-through; color:#94a3b8;' : ''}">${item.text}</span>
+                        <i class="fa-solid fa-xmark" style="cursor:pointer; color:#ef4444; margin-left:auto;" onclick="window.deleteSyllabusItem('mains', '${sub}', ${idx})"></i>
+                    </div>`;
+            });
+            html += `<div style="display:flex; gap:10px; margin-top:10px;"><input type="text" id="syl-new-mains-${sub}" placeholder="Add theme..." style="margin:0; padding:4px; font-size:0.8rem;"><button class="btn-sm btn-outline" onclick="window.addSyllabusItem('mains', '${sub}')">Add</button></div></div>`;
+            mainsGrid.innerHTML += html;
+        });
+    }
+
+    window.addSyllabusSubject = function(type) {
+        const inp = document.getElementById(type === 'prelims' ? 'syl-new-subject-pre' : 'syl-new-subject-mains');
+        if(!inp.value.trim()) return;
+        if(!window.syllabus[type][inp.value.trim()]) window.syllabus[type][inp.value.trim()] = [];
+        inp.value = ''; window.save(); window.renderSyllabus();
+    }
+    window.deleteSyllabusSubject = function(type, sub) { if(confirm("Delete entire subject?")) { delete window.syllabus[type][sub]; window.save(); window.renderSyllabus(); } }
+    window.toggleSyllabus = function(type, sub, idx) { window.syllabus[type][sub][idx].done = !window.syllabus[type][sub][idx].done; window.save(); window.renderSyllabus(); }
+    window.addSyllabusItem = function(type, sub) {
+        const inp = document.getElementById(type === 'prelims' ? `syl-new-${sub}` : `syl-new-mains-${sub}`);
+        if(!inp.value.trim()) return;
+        window.syllabus[type][sub].push({ text: inp.value.trim(), done: false });
+        inp.value = ''; window.save(); window.renderSyllabus();
+    }
+    window.deleteSyllabusItem = function(type, sub, idx) { window.syllabus[type][sub].splice(idx, 1); window.save(); window.renderSyllabus(); }
+
+
+    // --- ADVANCED CUMULATIVE ANALYTICS (Subject mapped Error Tags) ---
+    window.renderAnalytics = function() {
+        const subjFilter = document.getElementById('analytics-subject-filter');
+        let subjectsFound = new Set();
+        let tAtt=0, tCor=0, tWr=0, tUnatt=0, numTests=0;
+        let traitStats = {}; 
+        let errStats = {};   
+        let trendData = []; // For graphs
+
+        window.tests.forEach(t => {
+            if(t.evaluated && t.type === 'prelims') {
+                for(let i=1; i<=t.count; i++) {
+                    if(t.userAns[i] && t.userAns[i].subject) subjectsFound.add(t.userAns[i].subject);
+                }
+            }
+        });
+        
+        const currSel = subjFilter.value;
+        subjFilter.innerHTML = `<option value="ALL">All Subjects Overview</option>` + Array.from(subjectsFound).map(s => `<option value="${s}">${s}</option>`).join('');
+        subjFilter.value = subjectsFound.has(currSel) ? currSel : 'ALL';
+        const targetSubject = subjFilter.value;
+
+        window.tests.forEach(t => {
+            if(t.evaluated && t.type === 'prelims') {
+                numTests++;
+                let t_att=0;
+                
+                // Track trend for ALL subjects overview only
+                if(targetSubject === 'ALL') {
+                    trendData.push({name: t.name, pct: t.stats && t.count > 0 ? (t.stats.c/t.count)*100 : 0, score: t.score});
+                }
+
+                for(let i=1; i<=t.count; i++) {
+                    const entry = t.userAns[i]; const key = t.key[i];
+                    const s = entry ? (entry.subject || 'Uncategorized') : 'Uncategorized';
+                    if(targetSubject !== 'ALL' && s !== targetSubject) continue;
+
+                    if(entry && entry.ans) {
+                        tAtt++; t_att++;
+                        const isCor = (entry.ans === key);
+                        if(isCor) tCor++; else tWr++;
+
+                        if(entry.tags && entry.tags.length > 0) {
+                            entry.tags.forEach(tag => {
+                                if(traitTagsList.includes(tag)) {
+                                    if(!traitStats[tag]) traitStats[tag] = {att:0, cor:0};
+                                    traitStats[tag].att++;
+                                    if(isCor) traitStats[tag].cor++;
+                                } 
+                                else if (errorTagsList.includes(tag) && !isCor) {
+                                    if(!errStats[tag]) errStats[tag] = 0;
+                                    errStats[tag]++;
+                                }
+                            });
+                        }
+                    } else {
+                        tUnatt++; // Only counts if we are looking at all subjects, or if we explicitly assigned a subject to a blank question (rare).
+                    }
+                }
+            }
+        });
+
+        document.getElementById('cum-tests').innerText = numTests;
+        document.getElementById('cum-att').innerText = tAtt;
+        document.getElementById('cum-cor').innerText = tCor;
+        document.getElementById('cum-wr').innerText = tWr;
+        document.getElementById('cum-unatt').innerText = tUnatt;
+        document.getElementById('cum-acc').innerText = tAtt > 0 ? Math.round((tCor/tAtt)*100) + "%" : "0%";
+
+        // Traits Table 
+        const traitBody = document.getElementById('cum-trait-body'); traitBody.innerHTML = '';
+        Object.keys(traitStats).forEach(tag => {
+            const st = traitStats[tag];
+            const acc = st.att > 0 ? Math.round((st.cor/st.att)*100) + "%" : "0%";
+            traitBody.innerHTML += `<tr><td style="text-align:left; font-weight:bold; text-transform:capitalize;">${tag}</td><td>${st.att}</td><td style="color:var(--success); font-weight:bold;">${st.cor}</td><td style="color:var(--primary); font-weight:bold;">${acc}</td></tr>`;
+        });
+        if(traitBody.innerHTML === '') traitBody.innerHTML = `<tr><td colspan="4" style="color:#94a3b8;">Tag questions in Analysis mode.</td></tr>`;
+
+        // Error Reasons Table
+        const errBody = document.getElementById('cum-err-body'); errBody.innerHTML = '';
+        let totalErrorsTagged = Object.values(errStats).reduce((sum, count) => sum + count, 0);
+        
+        Object.keys(errStats).sort((a,b) => errStats[b] - errStats[a]).forEach(tag => {
+            const count = errStats[tag];
+            const pct = totalErrorsTagged > 0 ? Math.round((count/totalErrorsTagged)*100) + "%" : "0%";
+            errBody.innerHTML += `<tr><td style="text-align:left; font-weight:bold; text-transform:capitalize; color:var(--danger);">${tag}</td><td>${count}</td><td style="color:var(--purple); font-weight:bold;">${pct}</td></tr>`;
+        });
+        if(errBody.innerHTML === '') errBody.innerHTML = `<tr><td colspan="3" style="color:#94a3b8;">No error reasons tagged for this subject.</td></tr>`;
+
+        // Render Trend Graph (Last 15 tests)
+        const graphCon = document.getElementById('trend-graph'); graphCon.innerHTML = '';
+        if(targetSubject === 'ALL' && trendData.length > 0) {
+            let recent = trendData.slice(-15);
+            recent.forEach(d => {
+                graphCon.innerHTML += `
+                    <div class="trend-bar" style="height:${Math.max(d.pct, 5)}%;">
+                        <div class="trend-tooltip">${d.name}: ${d.score} Marks</div>
+                    </div>`;
+            });
+        } else {
+            graphCon.innerHTML = `<p style="color:#94a3b8; font-size:0.85rem; width:100%; text-align:center;">Graphs available for 'All Subjects Overview' only.</p>`;
+        }
+    }
+
+
+    // --- NAVIGATION AND VIEW ENGINE ---
+    window.updateNav = function(id) {
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        if(document.getElementById(id)) document.getElementById(id).classList.add('active');
+    }
+
+    window.showView = function(id) {
+        document.querySelectorAll('.container > div, .container-limited').forEach(v => v.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        
+        document.getElementById('nav-actions').classList.toggle('hidden', id === 'taking-page' || id === 'key-page');
+        document.getElementById('active-test-controls').classList.toggle('hidden', id !== 'taking-page');
+        
+        if(id === 'holistic-page') { window.renderResources(); window.updateNav('nav-holistic'); }
+        if(id === 'habits-page') { window.renderHabits(); window.updateNav('nav-habits'); }
+        if(id === 'planners-page') { window.renderPlanners(); window.updateNav('nav-planners'); }
+        if(id === 'syllabus-page') { window.renderSyllabus(); window.updateNav('nav-syllabus'); }
+        if(id === 'analytics-page') { window.renderAnalytics(); window.updateNav('nav-analytics'); }
+        if(id === 'library-page') { window.renderLibrary(); window.updateNav('nav-library'); }
+        if(id === 'series-page') { window.renderSeriesList(); window.updateNav('nav-library'); }
+        if(id === 'test-window') { window.openTest(window.activeIdx); window.updateNav('nav-library'); }
+    }
+
+    window.resetPanelsForSplitScreen = function() {
+        document.querySelectorAll('.pdf-panel').forEach(p => p.style.width = '50%');
+        document.querySelectorAll('.interaction-panel').forEach(p => p.style.display = ''); 
+        document.querySelectorAll('.resizer').forEach(p => p.style.display = 'flex');
+    }
+
+    window.togglePanel = function(btn) {
+        const p = btn.closest('.pdf-panel'); const isFull = p.style.width === '100%';
+        p.style.width = isFull ? '50%' : '100%';
+        const panels = p.parentElement.querySelectorAll('.interaction-panel:not(.hidden)');
+        panels.forEach(panel => { panel.style.display = isFull ? '' : 'none'; });
+        p.parentElement.querySelector('.resizer').style.display = isFull ? 'flex' : 'none';
+    }
+
+    window.toggleAppFullscreen = function() {
+        if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => console.log(e)); } 
+        else { if(document.exitFullscreen) document.exitFullscreen(); }
+    }
+
+    // --- COUNTDOWN TIMER (FIXED TO MAY 23, 2027) ---
+    window.updatePrelimsTimer = function() {
+        const target = new Date("2027-05-23T00:00:00"); 
+        const diff = target - new Date();
+        if (diff <= 0) return;
+        document.getElementById('cd-d').innerText = Math.floor(diff / (1000 * 60 * 60 * 24));
+        document.getElementById('cd-h').innerText = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        document.getElementById('cd-m').innerText = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    }
+    setInterval(window.updatePrelimsTimer, 60000); window.updatePrelimsTimer();
+
+    // --- TEST MANAGEMENT ---
+    window.setTestType = function(type) {
+        document.getElementById('in-test-type').value = type;
+        document.getElementById('btn-type-prelims').classList.toggle('active', type === 'prelims');
+        document.getElementById('btn-type-mains').classList.toggle('active', type === 'mains');
+        document.getElementById('prelims-settings').style.display = type === 'prelims' ? 'grid' : 'none';
+        document.getElementById('mains-settings').style.display = type === 'mains' ? 'block' : 'none';
+    }
+
+    window.renderLibrary = function() {
+        const seriesMap = {};
+        window.tests.forEach(t => { const s = t.series || 'General'; if(!seriesMap[s]) seriesMap[s] = 0; seriesMap[s]++; });
+        const grid = document.getElementById('library-grid'); grid.innerHTML = '';
+        Object.keys(seriesMap).forEach(key => {
+            const div = document.createElement('div'); div.className = 'lib-card'; div.onclick = () => window.openSeries(key);
+            div.innerHTML = `<div class="lib-icon"><i class="fa-solid fa-folder"></i></div><div class="lib-title">${key}</div><div class="lib-stats">${seriesMap[key]} Tests</div>`;
+            grid.appendChild(div);
+        });
+    }
+
+    window.openSeries = function(name) { window.currentSeriesFilter = name; window.showView('series-page'); }
+    
+    window.renderSeriesList = function() {
+        document.getElementById('series-title').innerText = window.currentSeriesFilter;
+        const list = document.getElementById('main-test-list'); list.innerHTML = '';
+        const filtered = window.tests.map((t,i)=>({...t, originalIndex:i})).filter(t=>(t.series||'General')===window.currentSeriesFilter);
+        filtered.forEach(t => {
+            const div = document.createElement('div'); div.className = 'test-card';
+            
+            let scoreBoardHtml = '';
+            let certBadges = '';
+            
+            if (t.evaluated && t.type === 'prelims' && t.stats) {
+                const acc = t.stats.att > 0 ? Math.round((t.stats.c / t.stats.att) * 100) : 0;
+                scoreBoardHtml = `
+                    <div class="mini-score-grid">
+                        <div><b>${t.stats.att}</b><small>ATT</small></div>
+                        <div><b style="color:var(--success);">${t.stats.c}</b><small>RIGHT</small></div>
+                        <div><b style="color:var(--danger);">${t.stats.w}</b><small>WRONG</small></div>
+                        <div><b style="color:var(--purple);">${acc}%</b><small>ACC</small></div>
+                        <div><b style="color:var(--primary);">${t.score}</b><small>SCORE</small></div>
+                    </div>`;
+                    
+                // Certainty Badges
+                const s = t.stats.certStats || {};
+                certBadges = `<div class="cert-badge-row">`;
+                ["100", "50", "25", "0"].forEach(lvl => {
+                    if(s[lvl]) {
+                        const l_acc = s[lvl].att > 0 ? Math.round((s[lvl].cor/s[lvl].att)*100) : 0;
+                        certBadges += `<span><b>${lvl}%:</b> <span style="color:${l_acc>70?'var(--success)':'var(--text)'}">${l_acc}%</span></span>`;
+                    }
+                });
+                certBadges += `</div>`;
+                
+            } else if (t.evaluated && t.type === 'mains') {
+                scoreBoardHtml = `
+                    <div class="mini-score-grid">
+                        <div><b style="color:var(--primary);">${t.score} / ${t.mainsTotal||'-'}</b><small>FINAL SCORE</small></div>
+                    </div>`;
+            }
+
+            div.innerHTML = `
+                <div style="font-size:0.7rem; color:#64748b; font-weight:800; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">${t.type === 'mains' ? 'MAINS' : 'PRELIMS'}</div>
+                <h3 style="font-size:1.1rem;margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.name}</h3>
+                <div style="color:#64748b;font-size:0.8rem;">${t.count} Qs • ${t.time} Min</div>
+                ${scoreBoardHtml}
+                ${certBadges}
+                <div style="margin-top:15px; display:flex; gap:10px;">
+                    <button class="btn-sm btn-outline" style="flex:1;" onclick="window.openTest(${t.originalIndex})">Open Lobby</button>
+                    <button class="btn-sm btn-ghost" style="color:var(--danger);" onclick="window.deleteTest(${t.originalIndex})"><i class="fa-solid fa-trash"></i></button>
+                </div>`;
+            list.appendChild(div);
+        });
+    }
+
+    window.deleteTest = function(i) {
+        if(confirm("Permanently delete this test?")) { const s = window.tests[i].series; window.tests.splice(i,1); window.save(); window.currentSeriesFilter = s; window.renderSeriesList(); }
+    }
+
+    window.initCreateTest = function(prefSeries='') { 
+        window.activeIdx=null; 
+        document.getElementById('in-series').value=prefSeries; 
+        document.getElementById('in-name').value = '';
+        document.getElementById('in-count').value = 50;
+        document.getElementById('in-time').value = 60;
+        window.setTestType('prelims');
+        window.showView('create-page'); 
+    }
+    
+    window.editCurrentTest = function() { 
+        const t=window.tests[window.activeIdx]; 
+        document.getElementById('create-title').innerText="Edit Test"; 
+        document.getElementById('in-series').value=t.series||'General'; 
+        ['in-name','in-count','in-time','in-pos'].forEach(k=>document.getElementById(k).value=t[k.replace('in-','')]); 
+        if(t.mainsTotal) document.getElementById('in-mains-total').value = t.mainsTotal;
+        window.setTestType(t.type || 'prelims');
+        window.showView('create-page'); 
+    }
+
+    window.goBackToSeries = function() { window.currentSeriesFilter ? window.showView('series-page') : window.showView('library-page'); }
+    window.cancelCreate = function() { window.currentSeriesFilter ? window.showView('series-page') : window.showView('library-page'); }
+
+    window.saveTest = function() {
+        const obj = { 
+            id: window.activeIdx !== null ? window.tests[window.activeIdx].id : Date.now(),
+            type: document.getElementById('in-test-type').value,
+            series: document.getElementById('in-series').value.trim()||'General', 
+            name: document.getElementById('in-name').value||"Test", 
+            count: parseInt(document.getElementById('in-count').value), 
+            time: parseInt(document.getElementById('in-time').value), 
+            pos: parseFloat(document.getElementById('in-pos').value), 
+            neg: parseFloat(document.getElementById('in-pos').value)*parseFloat(document.getElementById('in-neg-factor').value), 
+            mainsTotal: parseInt(document.getElementById('in-mains-total').value),
+            userAns: window.activeIdx !== null ? window.tests[window.activeIdx].userAns : {}, 
+            key: window.activeIdx !== null ? window.tests[window.activeIdx].key : {}, 
+            submitted: window.activeIdx !== null ? window.tests[window.activeIdx].submitted : false, 
+            evaluated: window.activeIdx !== null ? window.tests[window.activeIdx].evaluated : false,
+            stats: window.activeIdx !== null ? window.tests[window.activeIdx].stats : null
+        };
+        if(window.activeIdx!==null) window.tests[window.activeIdx] = obj; else window.tests.push(obj);
+        window.save(); window.currentSeriesFilter=obj.series; window.renderSeriesList(); window.showView('series-page');
+    }
+
+    // --- TEST TAKING LOGIC ---
+    window.openTest = function(i) {
+        window.activeIdx = i; const t = window.tests[i];
+        const testType = t.type || 'prelims';
+        
+        document.getElementById('win-title').innerText = t.name; 
+        document.getElementById('win-type-tag').innerText = testType === 'mains' ? 'MAINS' : 'PRELIMS';
+        document.getElementById('win-type-tag').style.background = testType === 'mains' ? 'var(--purple)' : 'var(--primary)';
+        
+        ['unattempted','submitted','evaluated'].forEach(id => document.getElementById('action-'+id).classList.add('hidden'));
+        if(t.evaluated) { 
+            document.getElementById('action-evaluated').classList.remove('hidden'); 
+            document.getElementById('dash-score').innerText = t.score;
+            if(testType === 'prelims') {
+                document.getElementById('dash-acc-block').style.display = 'block';
+                document.getElementById('dash-acc').innerText = (t.stats && t.stats.att > 0) ? Math.round((t.stats.c / t.stats.att) * 100) + "%" : "0%";
+            } else {
+                document.getElementById('dash-acc-block').style.display = 'none';
+            }
+        }
+        else if(t.submitted) { document.getElementById('action-submitted').classList.remove('hidden'); }
+        else { document.getElementById('action-unattempted').classList.remove('hidden'); }
+        window.showView('test-window');
+    }
+
+    window.startActualTest = function() {
+        const t = window.tests[window.activeIdx];
+        const testType = t.type || 'prelims';
+        if (!t.userAns) t.userAns = {};
+
+        window.toggleAppFullscreen(); 
+        window.loadPDFIfExists('qp', 'qp-frame', 'qp-placeholder');
+        window.resetPanelsForSplitScreen(); 
+
+        if(testType === 'prelims') {
+            document.getElementById('interaction-prelims').classList.remove('hidden');
+            document.getElementById('interaction-mains').classList.add('hidden');
+            window.renderOMR('test-omr-container', 'userAns', 2); 
+        } else {
+            document.getElementById('interaction-prelims').classList.add('hidden');
+            document.getElementById('interaction-mains').classList.remove('hidden');
+        }
+        
+        window.showView('taking-page');
+        
+        window.testSecondsRemaining = t.time * 60;
+        window.isPaused = false;
+        document.getElementById('btn-pause').innerHTML = "<i class='fa-solid fa-pause'></i> Pause";
+        document.getElementById('btn-pause').className = "btn btn-outline btn-sm";
+        document.getElementById('split-taking').style.opacity = "1";
+        document.getElementById('split-taking').style.pointerEvents = "auto";
+        
+        clearInterval(window.timerInterval);
+        window.timerInterval = setInterval(() => {
+            if(window.isPaused) return; 
+            let m=Math.floor(window.testSecondsRemaining/60), s=window.testSecondsRemaining%60; 
+            document.getElementById('timer-display').innerText = `${m}:${s<10?'0'+s:s}`;
+            if(--window.testSecondsRemaining < 0) { clearInterval(window.timerInterval); window.finishTest(); }
+        }, 1000);
+    }
+
+    window.togglePause = function() {
+        window.isPaused = !window.isPaused;
+        const btn = document.getElementById('btn-pause');
+        btn.innerHTML = window.isPaused ? "<i class='fa-solid fa-play'></i> Resume" : "<i class='fa-solid fa-pause'></i> Pause";
+        btn.className = window.isPaused ? "btn btn-success btn-sm" : "btn btn-outline btn-sm";
+        
+        document.getElementById('split-taking').style.opacity = window.isPaused ? "0.1" : "1";
+        document.getElementById('split-taking').style.pointerEvents = window.isPaused ? "none" : "auto";
+    }
+
+    window.finishTest = function() { 
+        if(confirm("Submit test?")) { 
+            if(document.exitFullscreen) document.exitFullscreen(); 
+            clearInterval(window.timerInterval); 
+            window.tests[window.activeIdx].submitted = true; 
+            window.save(); window.openTest(window.activeIdx); 
+        } 
+    }
+
+    window.reattemptTest = function() {
+        if(!confirm("Start new attempt? Current score will be overwritten.")) return;
+        const t = window.tests[window.activeIdx];
+        t.userAns = {}; t.score = 0; t.stats = null; t.submitted = false; t.evaluated = false;
+        window.save(); window.openTest(window.activeIdx);
+    }
+
+    // --- EVALUATION LOGIC ---
+    window.showKeyEntry = function() { 
+        const t = window.tests[window.activeIdx];
+        const testType = t.type || 'prelims';
+        if (!t.key) t.key = {};
+
+        window.loadPDFIfExists('sol', 'key-frame', 'key-placeholder'); 
+        window.resetPanelsForSplitScreen(); 
+        
+        if(testType === 'prelims') {
+            document.getElementById('eval-prelims').classList.remove('hidden');
+            document.getElementById('eval-mains').classList.add('hidden');
+            document.getElementById('lbl-mains-ans').classList.add('hidden');
+            window.renderOMR('key-omr-container', 'key', 3); 
+        } else {
+            document.getElementById('eval-prelims').classList.add('hidden');
+            document.getElementById('eval-mains').classList.remove('hidden');
+            document.getElementById('lbl-mains-ans').classList.remove('hidden'); 
+            
+            let html = "";
+            for(let i=1; i<=t.count; i++) {
+                if(!t.key[i]) t.key[i] = { marks: 0, remarks: "" };
+                html += `<div style="background:#f8fafc; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            <b style="font-size:0.85rem;">Q${i} Marks:</b> <input type="number" id="mains-marks-${i}" style="width:80px; padding:4px; display:inline-block; margin-left:10px;" value="${t.key[i].marks}">
+                            <br><input type="text" id="mains-remarks-${i}" placeholder="Remarks (e.g. Needs better intro)" value="${t.key[i].remarks}" style="margin-top:5px; margin-bottom:0; padding:6px; font-size:0.85rem;">
+                         </div>`;
+            }
+            document.getElementById('mains-eval-container').innerHTML = html;
+        }
+        window.showView('key-page'); 
+    }
+
+    window.validateAndCalculate = function() {
+        const t = window.tests[window.activeIdx]; 
+        const testType = t.type || 'prelims';
+        
+        if(testType === 'mains') {
+            let total = 0;
+            for(let i=1; i<=t.count; i++) {
+                t.key[i].marks = parseFloat(document.getElementById(`mains-marks-${i}`).value) || 0;
+                t.key[i].remarks = document.getElementById(`mains-remarks-${i}`).value;
+                total += t.key[i].marks;
+            }
+            t.score = total.toFixed(2);
+        } else {
+            let c=0, w=0, att=0;
+            const certStats = { "100": {att:0, cor:0}, "50": {att:0, cor:0}, "25": {att:0, cor:0}, "0": {att:0, cor:0} };
+
+            for(let i=1; i<=t.count; i++) {
+                const userEntry = t.userAns[i]; const correctAns = t.key[i];
+                if(userEntry && userEntry.ans) {
+                    att++;
+                    const cert = userEntry.cert || "100"; if(certStats[cert]) certStats[cert].att++;
+                    if(userEntry.ans === correctAns) { c++; if(certStats[cert]) certStats[cert].cor++; } else { w++; }
+                }
+            }
+            t.score = ((c*t.pos) - (w*t.neg)).toFixed(2); t.stats = {c, w, att, certStats}; 
+        }
+        t.evaluated = true; window.save(); window.renderAnalysis();
+    }
+    
+    // --- ANALYSIS RENDERERS ---
+    window.renderAnalysis = function() {
+        const t = window.tests[window.activeIdx]; 
+        const testType = t.type || 'prelims';
+
+        document.getElementById('an-s').innerText = t.score;
+        window.loadPDFIfExists('sol', 'sol-frame', 'sol-placeholder');
+        window.resetPanelsForSplitScreen();
+
+        if(testType === 'prelims') {
+            document.getElementById('prelims-analysis-view').classList.remove('hidden');
+            document.getElementById('mains-analysis-view').classList.add('hidden');
+            document.getElementById('btn-view-mains-ans').classList.add('hidden');
+            
+            document.getElementById('an-att-box').style.display = 'block';
+            document.getElementById('an-c-box').style.display = 'block';
+            document.getElementById('an-w-box').style.display = 'block';
+            document.getElementById('an-unatt-box').style.display = 'block';
+
+            document.getElementById('an-att').innerText = t.stats.att;
+            document.getElementById('an-c').innerText = t.stats.c;
+            document.getElementById('an-w').innerText = t.stats.w;
+            document.getElementById('an-unatt').innerText = t.count - t.stats.att; // UNATTEMPTED CALCULATION
+
+            // Subject Wise Accuracy inside single test
+            let subjStats = {};
+            for(let i=1; i<=t.count; i++) {
+                if(t.userAns[i] && t.userAns[i].subject) {
+                    const s = t.userAns[i].subject;
+                    if(!subjStats[s]) subjStats[s] = {att:0, cor:0};
+                    if(t.userAns[i].ans) {
+                        subjStats[s].att++;
+                        if(t.userAns[i].ans === t.key[i]) subjStats[s].cor++;
+                    }
+                }
+            }
+            
+            const subjBody = document.getElementById('test-subj-stats-body'); subjBody.innerHTML = '';
+            Object.keys(subjStats).forEach(s => {
+                const acc = subjStats[s].att > 0 ? Math.round((subjStats[s].cor/subjStats[s].att)*100) + "%" : "0%";
+                subjBody.innerHTML += `<tr><td style="font-weight:600; text-align:left;">${s}</td><td>${subjStats[s].att}</td><td style="color:var(--success); font-weight:bold;">${subjStats[s].cor}</td><td style="color:var(--purple); font-weight:bold;">${acc}</td></tr>`;
+            });
+            if(subjBody.innerHTML === '') subjBody.innerHTML = `<tr><td colspan="4" style="color:#94a3b8; font-size:0.75rem;">Assign subjects to questions below to see stats.</td></tr>`;
+
+            const s = t.stats.certStats || {"100":{att:0,cor:0},"50":{att:0,cor:0},"25":{att:0,cor:0},"0":{att:0,cor:0}};
+            const tbody = document.getElementById('cert-stats-body'); tbody.innerHTML = '';
+            Object.keys(s).reverse().forEach(lvl => {
+                const acc = s[lvl].att === 0 ? "0%" : Math.round((s[lvl].cor/s[lvl].att)*100) + "%";
+                tbody.innerHTML += `<tr><td style="font-weight:bold;">${lvl}%</td><td>${s[lvl].att}</td><td style="color:var(--text); font-weight:bold;">${acc}</td></tr>`;
+            });
+
+            const list=document.getElementById('review-list'); list.innerHTML='';
+            for(let i=1;i<=t.count;i++){ 
+                const entry = t.userAns[i]; const u = entry ? entry.ans : null; const isMarked = entry ? entry.marked : false;
+                const subj = entry ? (entry.subject || "") : "";
+                const tags = entry ? (entry.tags || []) : [];
+                
+                const cat = !u ? 'skipped' : (u === t.key[i] ? 'correct' : 'wrong');
+                const div = document.createElement('div'); div.className=`review-box rev-${cat}`; 
+                
+                let subjOptions = `<option value="">-- Assign Subject --</option>` + subjectList.map(sub => `<option value="${sub}" ${subj===sub?'selected':''}>${sub}</option>`).join('');
+                
+                let traitTagsHtml = traitTagsList.map(tag => `<div class="err-tag trait-tag ${tags.includes(tag)?'active':''}" onclick="window.toggleQuestionTag(${window.activeIdx}, ${i}, '${tag}', this)">${tag}</div>`).join('');
+                let errorTagsHtml = errorTagsList.map(tag => `<div class="err-tag ${tags.includes(tag)?'active':''}" onclick="window.toggleQuestionTag(${window.activeIdx}, ${i}, '${tag}', this)">${tag}</div>`).join('');
+                
+                div.innerHTML=`
+                    <div style="display:flex; justify-content:space-between; font-weight:800; border-bottom:1px dashed var(--border); padding-bottom:5px; margin-bottom:10px;">
+                        <span>Q${i}</span>
+                        ${isMarked ? '<span style="color:var(--warning); font-size:0.75rem;"><i class="fa-solid fa-flag"></i> MARKED</span>' : ''}
+                    </div>
+                    <div style="text-align:center; padding-bottom:10px; margin-bottom:10px; background:#f8fafc; border-radius:6px; padding:10px;">
+                        <span style="font-size:0.9rem;">You: <b style="color:var(--primary);">${u||'-'}</b> <small>(${entry ? entry.cert : 100}%)</small> <span style="color:#cbd5e1; margin:0 5px;">|</span> Key: <b style="color:var(--success);">${t.key[i]||'?'}</b></span>
+                    </div>
+                    <div>
+                        <select style="padding:4px; font-size:0.75rem; margin-bottom:8px; font-weight:600; color:var(--text);" onchange="window.setQuestionSubject(${window.activeIdx}, ${i}, this.value)">${subjOptions}</select>
+                        <div style="margin-bottom:5px;">${traitTagsHtml}</div>
+                        <div>${errorTagsHtml}</div>
+                    </div>
+                `; 
+                list.appendChild(div); 
+            }
+        } else {
+            document.getElementById('prelims-analysis-view').classList.add('hidden');
+            document.getElementById('mains-analysis-view').classList.remove('hidden');
+            document.getElementById('btn-view-mains-ans').classList.remove('hidden');
+            
+            document.getElementById('an-att-box').style.display = 'none';
+            document.getElementById('an-c-box').style.display = 'none';
+            document.getElementById('an-w-box').style.display = 'none';
+            document.getElementById('an-unatt-box').style.display = 'none';
+
+            const list = document.getElementById('mains-remarks-list'); list.innerHTML = '';
+            for(let i=1;i<=t.count;i++){
+                list.innerHTML += `<div style="background:white; padding:12px; border-radius:6px; border:1px solid var(--border);"><b>Q${i}:</b> <span style="color:var(--primary); font-weight:bold;">${t.key[i].marks} Marks</span> <br> <span style="color:#475569; font-size:0.85rem; display:block; margin-top:5px;">${t.key[i].remarks}</span></div>`;
+            }
+        }
+        window.showView('analysis-page');
+    }
+
+    // DIRECT DOM MANIPULATION FOR ERROR TAGS (Stops PDF jumping)
+    window.setQuestionSubject = function(testIdx, qNum, val) {
+        if(!window.tests[testIdx].userAns[qNum]) window.tests[testIdx].userAns[qNum] = {ans:null, cert:"100", marked:false};
+        window.tests[testIdx].userAns[qNum].subject = val;
+        window.save(); window.renderAnalysis(); // Subject change requires re-render to update the tables
+    }
+
+    window.toggleQuestionTag = function(testIdx, qNum, tag, el) {
+        if(!window.tests[testIdx].userAns[qNum]) window.tests[testIdx].userAns[qNum] = {ans:null, cert:"100", marked:false, tags:[]};
+        if(!window.tests[testIdx].userAns[qNum].tags) window.tests[testIdx].userAns[qNum].tags = [];
+        
+        const tags = window.tests[testIdx].userAns[qNum].tags;
+        if(tags.includes(tag)) {
+            tags.splice(tags.indexOf(tag), 1);
+            el.classList.remove('active'); 
+        } else {
+            tags.push(tag);
+            el.classList.add('active'); 
+        }
+        window.save(); 
+        // No renderAnalysis() call here = PDF stays in place!
+    }
+
+    window.showDetailedError = function(testIdx) {
+        const t = window.tests[testIdx];
+        if(t.type === 'mains') return alert("Detailed Error Analysis is for Prelims OMR tests.");
+        
+        let tagStats = {};
+        errorTagsList.forEach(tag => tagStats[tag] = {occ: 0, att: 0, right: 0, wrong: 0});
+
+        for(let i=1; i<=t.count; i++) {
+            const entry = t.userAns[i];
+            const correctAns = t.key[i];
+            if(entry && entry.tags && entry.tags.length > 0) {
+                entry.tags.forEach(tag => {
+                    if(!tagStats[tag]) return; // ignore trait tags here
+                    tagStats[tag].occ++;
+                    if(entry.ans) {
+                        tagStats[tag].att++;
+                        if(entry.ans === correctAns) tagStats[tag].right++;
+                        else tagStats[tag].wrong++;
+                    }
+                });
+            }
+        }
+
+        const tbody = document.getElementById('error-modal-body');
+        tbody.innerHTML = '';
+        errorTagsList.forEach(tag => {
+            const st = tagStats[tag];
+            if(st.occ > 0) {
+                const acc = st.att > 0 ? Math.round((st.right / st.att) * 100) + "%" : "0%";
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align:left; font-weight:bold; text-transform:capitalize;">${tag}</td>
+                        <td>${st.occ}</td>
+                        <td>${st.att}</td>
+                        <td style="color:var(--success); font-weight:bold;">${st.right}</td>
+                        <td style="color:var(--danger); font-weight:bold;">${st.wrong}</td>
+                        <td style="color:var(--primary); font-weight:bold;">${acc}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        if(tbody.innerHTML === '') {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding:20px; color:#94a3b8;">No error tags applied to this test yet.</td></tr>`;
+        }
+
+        document.getElementById('error-modal').classList.remove('hidden');
+    }
+
+    window.renderOMR = function(id,k,cols) {
+        const con=document.getElementById(id); con.innerHTML=''; const t=window.tests[window.activeIdx]; const per=Math.ceil(t.count/cols);
+        const isUserAns = (k === 'userAns');
+        if (!t[k]) t[k] = {};
+
+        for(let c=0;c<cols;c++){ 
+            const d=document.createElement('div'); d.className='omr-column';
+            for(let i=(c*per)+1; i<=Math.min((c+1)*per, t.count); i++){
+                const r=document.createElement('div'); r.className='omr-row'; 
+                if(isUserAns && (!t[k][i] || typeof t[k][i] === 'string')) { t[k][i] = { ans: null, cert: "100", marked: false, subject: "", tags: [] }; }
+                const entry = isUserAns ? t[k][i] : {ans: t[k][i]};
+                
+                let html = `<div class="omr-controls-row"><b style="width:20px;font-size:0.8rem">${i}</b>`;
+                html += ['A','B','C','D'].map(o=>`<div class="option-btn ${entry.ans==o?'selected':''}" onclick="window.setOpt(this,${i},'${o}','${k}')">${o}</div>`).join('');
+                if(isUserAns) { html += `<div class="option-btn ${entry.marked?'marked-active':''}" style="border-radius:4px; width:28px; margin-left:10px;" onclick="window.toggleMark(this, ${i})">M</div>`; }
+                html += `</div>`;
+                
+                if(isUserAns) {
+                    html += `<div class="cert-row">`;
+                    ["100", "50", "25", "0"].forEach(lvl => { html += `<div class="cert-btn ${entry.cert==lvl?'active':''}" onclick="window.setCert(this, ${i}, '${lvl}')">${lvl}%</div>`; });
+                    html += `</div>`;
+                }
+                r.innerHTML = html; d.appendChild(r);
+            } 
+            con.appendChild(d);
+        }
+    }
+
+    window.setOpt = function(el,q,o,k) { const t=window.tests[window.activeIdx]; if(!t[k]) t[k] = {}; if(k === 'key') { if(t[k][q]===o) delete t[k][q]; else t[k][q]=o; } else { if(t[k][q].ans===o) t[k][q].ans=null; else t[k][q].ans=o; } window.save(); window.renderOMR(el.closest('.omr-layout').id, k, (k==='key'?3:2)); }
+    window.toggleMark = function(el, q) { window.tests[window.activeIdx].userAns[q].marked = !window.tests[window.activeIdx].userAns[q].marked; window.save(); window.renderOMR('test-omr-container', 'userAns', 2); }
+    window.setCert = function(el, q, lvl) { window.tests[window.activeIdx].userAns[q].cert = lvl; window.save(); window.renderOMR('test-omr-container', 'userAns', 2); }
+    
+    let isDragging = false, currentContainerId = '';
+    window.initDrag = function(e, id) { isDragging=true; currentContainerId=id; document.querySelectorAll('.iframe-shield').forEach(d=>d.style.display='block'); document.body.style.cursor='col-resize'; }
+    document.addEventListener('mousemove', e => {
+        if(!isDragging) return;
+        const c = document.getElementById(currentContainerId);
+        const rect = c.getBoundingClientRect();
+        let w = ((e.clientX - rect.left)/rect.width)*100;
+        c.querySelector('.pdf-panel').style.width = Math.min(Math.max(w, 20), 80) + '%';
+    });
+    document.addEventListener('mouseup', () => { isDragging=false; document.querySelectorAll('.iframe-shield').forEach(d=>d.style.display='none'); document.body.style.cursor='default'; });
+</script>
+</body>
+</html>
